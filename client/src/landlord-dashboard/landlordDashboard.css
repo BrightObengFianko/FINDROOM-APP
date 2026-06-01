@@ -1,0 +1,62 @@
+.ld-dashboard {
+  --ld-green-50: #eff9ef;
+  --ld-green-100: #dcf4de;
+  --ld-green-200: #b8e6be;
+  --ld-green-400: #34a853;
+  --ld-green-500: #24963f;
+  --ld-green-600: #1f7f36;
+  --ld-slate-950: #0f172a;
+  --ld-slate-700: #334155;
+  --ld-slate-500: #64748b;
+  --ld-slate-300: #cbd5e1;
+  --ld-slate-200: #e2e8f0;
+  --ld-slate-100: #edf2f7;
+  --ld-card-shadow: 0 22px 60px rgba(15, 23, 42, 0.06), 0 4px 16px rgba(15, 23, 42, 0.04);
+  --ld-panel-shadow: 0 18px 42px rgba(36, 150, 63, 0.08);
+}
+
+.ld-dashboard,
+.ld-dashboard * {
+  box-sizing: border-box;
+}
+
+.ld-card-shadow {
+  box-shadow: var(--ld-card-shadow);
+}
+
+.ld-panel-shadow {
+  box-shadow: var(--ld-panel-shadow);
+}
+
+.ld-sidebar-scroll::-webkit-scrollbar,
+.ld-content-scroll::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.ld-sidebar-scroll::-webkit-scrollbar-thumb,
+.ld-content-scroll::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.35);
+  border-radius: 999px;
+}
+
+.ld-chart-grid {
+  background-image:
+    linear-gradient(to right, rgba(226, 232, 240, 0.6) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(226, 232, 240, 0.6) 1px, transparent 1px);
+  background-size: 18% 100%, 100% 20%;
+}
+
+.ld-upload-dashed {
+  background-image: radial-gradient(circle at center, rgba(36, 150, 63, 0.08) 0, rgba(36, 150, 63, 0.02) 70%);
+}
+
+.ld-message-fade {
+  background: linear-gradient(180deg, rgba(249, 250, 251, 0) 0%, rgba(249, 250, 251, 1) 100%);
+}
+
+.ld-body-shell {
+  background:
+    radial-gradient(circle at top left, rgba(36, 150, 63, 0.05), transparent 30%),
+    linear-gradient(180deg, #f8fbf7 0%, #f5f8f5 100%);
+}
