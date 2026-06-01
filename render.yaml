@@ -3,7 +3,7 @@ services:
     runtime: node
     name: findroom-app
     plan: starter
-    buildCommand: npm --prefix server install && npm --prefix client install && npm --prefix client run build
+    buildCommand: npm --prefix server install --omit=dev && npm --prefix client install --include=dev && npm --prefix client run build
     startCommand: npm start
     disk:
       name: findroom-data
