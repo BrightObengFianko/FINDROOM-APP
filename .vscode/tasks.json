@@ -1,0 +1,36 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Install root dependencies",
+      "type": "process",
+      "command": "npm",
+      "args": ["install"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Install client dependencies",
+      "type": "process",
+      "command": "npm",
+      "args": ["--prefix", "client", "install"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Install server dependencies",
+      "type": "process",
+      "command": "npm",
+      "args": ["--prefix", "server", "install"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Install all dependencies",
+      "dependsOn": [
+        "Install root dependencies",
+        "Install client dependencies",
+        "Install server dependencies"
+      ],
+      "dependsOrder": "parallel",
+      "problemMatcher": []
+    }
+  ]
+}

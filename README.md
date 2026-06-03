@@ -102,6 +102,18 @@ npm run dev
 - Frontend: [http://localhost:5173](http://localhost:5173)
 - Backend: [http://localhost:5000/api/health](http://localhost:5000/api/health)
 
+### Run from Visual Studio Code
+
+If you prefer VS Code, the repo now includes launch and task settings:
+
+1. Open the `findroom-app` folder in VS Code.
+2. Run `Terminal > Run Task > Install all dependencies` the first time.
+3. Open `Run and Debug`.
+4. Select `FindRoom: Run full stack`.
+5. Press `F5`.
+
+That starts the React client and the Express server from VS Code terminals.
+
 ## API overview
 
 - `POST /api/auth/signup`

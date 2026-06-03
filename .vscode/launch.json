@@ -1,0 +1,25 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "FindRoom: Start client",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "npm run client",
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "name": "FindRoom: Start server",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "npm run server",
+      "cwd": "${workspaceFolder}"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "FindRoom: Run full stack",
+      "configurations": ["FindRoom: Start client", "FindRoom: Start server"]
+    }
+  ]
+}
