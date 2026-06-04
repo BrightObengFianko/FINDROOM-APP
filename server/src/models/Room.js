@@ -29,6 +29,9 @@ const roomSchema = new mongoose.Schema(
     description: { type: String, default: '' },
     summary: { type: String, default: '' },
     accent: { type: String, default: 'from-sky-500 via-cyan-500 to-blue-600' },
+    bookingLockedUntil: { type: String, default: '' },
+    bookingLockBookingId: { type: String, default: '' },
+    bookingLockPaymentId: { type: String, default: '' },
   },
   { timestamps: true },
 )

@@ -4,6 +4,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import AppShell from '../../components/layout/AppShell'
 import { useAppData } from '../../context/AppDataContext'
 import { useAuth } from '../../context/AuthContext'
+import { getRoomBookingLockLabel, isRoomBookingLocked } from '../../utils/bookingAvailability'
 import { readBookingDraft, writeBookingDraft, formatDurationLabel, normalizeDurationMonths } from '../../utils/bookingFlow'
 import { formatCurrency, formatDate, toDateInputValue } from '../../utils/format'
 
@@ -57,6 +58,8 @@ function BookingCheckoutPage() {
     )
   }
 
+  const isBooked = isRoomBookingLocked(room)
+
   if (room.status !== 'approved') {
     return (
       <AppShell title="Booking unavailable" subtitle="This room is not ready for checkout yet.">
@@ -64,6 +67,27 @@ function BookingCheckoutPage() {
           <p className="text-base font-semibold text-ink">{room.title} is not available for booking yet.</p>
           <p className="mt-2 app-muted">
             Please choose another approved room or check back after the listing review is complete.
+          </p>
+          <div className="mt-5 flex flex-wrap justify-center gap-3">
+            <Link className="action-button-secondary" to={`/rooms/${room.id}`}>
+              View room details
+            </Link>
+            <Link className="action-button-primary" to="/rooms">
+              Browse rooms
+            </Link>
+          </div>
+        </section>
+      </AppShell>
+    )
+  }
+
+  if (isBooked) {
+    return (
+      <AppShell title="Booking unavailable" subtitle="This room is already booked.">
+        <section className="section-card text-center">
+          <p className="text-base font-semibold text-ink">{getRoomBookingLockLabel(room)}.</p>
+          <p className="mt-2 app-muted">
+            You can return after the booking period ends to continue with a new reservation.
           </p>
           <div className="mt-5 flex flex-wrap justify-center gap-3">
             <Link className="action-button-secondary" to={`/rooms/${room.id}`}>

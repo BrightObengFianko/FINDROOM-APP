@@ -18,7 +18,7 @@ router.post('/', async (req, res) => {
     return res.status(400).json({ message: 'roomId is required.' })
   }
 
-  const booking = await createBooking(req.user, roomId)
+  const booking = await createBooking(req.user, roomId, req.body)
   res.status(201).json({ booking })
 })
 

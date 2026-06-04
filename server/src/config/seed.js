@@ -4,6 +4,7 @@ const Message = require('../models/Message')
 const Payment = require('../models/Payment')
 const Room = require('../models/Room')
 const User = require('../models/User')
+const { calculateBookingLockUntilDate } = require('../utils/bookingAvailability')
 const { isDbConnected } = require('./db')
 const { createAvatarFallback, normalizeEmail } = require('../utils/userHelpers')
 const { applyUserRoles } = require('../utils/roles')
@@ -72,6 +73,9 @@ const seedRooms = async (createdUsers) => {
       description: room.description,
       summary: room.summary,
       accent: room.accent,
+      bookingLockedUntil: room.bookingLockedUntil || '',
+      bookingLockBookingId: room.bookingLockBookingId || '',
+      bookingLockPaymentId: room.bookingLockPaymentId || '',
     })
 
     createdRooms.set(room.id, created)
@@ -140,13 +144,68 @@ const seedPayments = async (createdUsers, createdBookings) => {
       continue
     }
 
-    await Payment.create({
+    const createdPayment = await Payment.create({
       booking: booking._id,
       user: user._id,
       amount: payment.amount,
       method: payment.method,
       status: payment.status,
     })
+
+    if (payment.status === 'successful') {
+      const bookingLockedUntil = calculateBookingLockUntilDate({
+        startDate: booking.startDate,
+        duration: booking.duration,
+      })
+
+      if (bookingLockedUntil) {
+        await Room.findByIdAndUpdate(booking.room, {
+          bookingLockedUntil,
+          bookingLockBookingId: booking.id || booking._id.toString(),
+          bookingLockPaymentId: createdPayment._id.toString(),
+        })
+      }
+    }
+  }
+}
+
+const backfillRoomBookingLocks = async () => {
+  const successfulPayments = await Payment.find({ status: 'successful' }).sort({ createdAt: -1 })
+  const bookings = await Booking.find().sort({ createdAt: -1 })
+  const roomLocks = new Map()
+
+  for (const payment of successfulPayments) {
+    const booking = bookings.find(
+      (candidate) => candidate._id.toString() === payment.booking.toString(),
+    )
+
+    if (!booking?.room) {
+      continue
+    }
+
+    const bookingLockedUntil = calculateBookingLockUntilDate({
+      startDate: booking.startDate,
+      duration: booking.duration,
+    })
+
+    if (!bookingLockedUntil) {
+      continue
+    }
+
+    const roomId = booking.room.toString()
+    const currentLock = roomLocks.get(roomId)
+
+    if (!currentLock || currentLock.bookingLockedUntil < bookingLockedUntil) {
+      roomLocks.set(roomId, {
+        bookingLockedUntil,
+        bookingLockBookingId: booking._id.toString(),
+        bookingLockPaymentId: payment._id.toString(),
+      })
+    }
+  }
+
+  for (const [roomId, lock] of roomLocks.entries()) {
+    await Room.findByIdAndUpdate(roomId, lock)
   }
 }
 
@@ -157,6 +216,7 @@ const seedMongoDatabase = async () => {
 
   const userCount = await User.countDocuments()
   if (userCount > 0) {
+    await backfillRoomBookingLocks()
     return false
   }
 
@@ -166,6 +226,7 @@ const seedMongoDatabase = async () => {
 
   await seedThreads(createdUsers, createdRooms)
   await seedPayments(createdUsers, createdBookings)
+  await backfillRoomBookingLocks()
 
   console.log('Seeded FindRoom demo data into MongoDB.')
   return true

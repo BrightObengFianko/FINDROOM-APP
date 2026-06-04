@@ -12,6 +12,11 @@ import {
 } from '../data/mockData'
 import api from '../lib/api'
 import { upsertAdminWorkspaceLandlord } from '../admin/services/adminService'
+import {
+  calculateBookingLockUntilDate,
+  getRoomBookingLockLabel,
+  isRoomBookingLocked,
+} from '../utils/bookingAvailability'
 import { resolveAllowedRoles } from '../utils/roles'
 import { useAuth } from './AuthContext'
 
@@ -196,6 +201,21 @@ const parseRoomLocation = (value = '') => {
   }
 }
 
+const updateRoomBookingLock = (setRooms, roomId, updates) => {
+  setRooms((current) =>
+    current.map((room) =>
+      room.id === roomId
+        ? {
+            ...room,
+            bookingLockedUntil: updates.bookingLockedUntil || '',
+            bookingLockBookingId: updates.bookingLockBookingId || '',
+            bookingLockPaymentId: updates.bookingLockPaymentId || '',
+          }
+        : room,
+    ),
+  )
+}
+
 export function AppDataProvider({ children }) {
   const { user, updateSessionUser } = useAuth()
   const [rooms, setRooms] = useState(mockRooms)
@@ -363,6 +383,28 @@ export function AppDataProvider({ children }) {
     return true
   }
 
+  const applyRoomBookingLock = (room, booking, payment) => {
+    if (!room) {
+      return
+    }
+
+    const bookingLockedUntil = calculateBookingLockUntilDate({
+      startDate: booking.startDate,
+      durationMonths: booking.durationMonths,
+      duration: booking.duration,
+    })
+
+    if (!bookingLockedUntil) {
+      return
+    }
+
+    updateRoomBookingLock(setRooms, room.id, {
+      bookingLockedUntil,
+      bookingLockBookingId: booking.id,
+      bookingLockPaymentId: payment.id,
+    })
+  }
+
   const bookRoom = async ({
     roomId,
     startDate,
@@ -377,6 +419,14 @@ export function AppDataProvider({ children }) {
 
     if (!user || !room) {
       return
+    }
+
+    if (room.status !== 'approved') {
+      throw new Error('This room is not approved for booking yet.')
+    }
+
+    if (isRoomBookingLocked(room)) {
+      throw new Error(`${getRoomBookingLockLabel(room)}.`)
     }
 
     const normalizedDurationMonths = Number.parseInt(durationMonths, 10)
@@ -424,7 +474,13 @@ export function AppDataProvider({ children }) {
       }
       setBookings((current) => [booking, ...current])
       return booking
-    } catch {
+    } catch (error) {
+      if (error?.response) {
+        throw new Error(
+          error.response.data?.message || 'Unable to create your booking right now.',
+        )
+      }
+
       setBookings((current) => [fallbackBooking, ...current])
       setRecentActivity((current) => [
         {
@@ -510,9 +566,14 @@ export function AppDataProvider({ children }) {
     bookingSnapshot,
   }) => {
     const booking = bookings.find((item) => item.id === bookingId) || bookingSnapshot
+    const bookingRoom = rooms.find((candidate) => candidate.id === booking?.roomId)
 
     if (!user || !booking) {
       return
+    }
+
+    if (bookingRoom && isRoomBookingLocked(bookingRoom) && bookingRoom.bookingLockBookingId !== booking.id) {
+      throw new Error(`${getRoomBookingLockLabel(bookingRoom)}.`)
     }
 
     const normalizedAmount = Number.isFinite(Number(amount))
@@ -555,6 +616,7 @@ export function AppDataProvider({ children }) {
           item.id === bookingId ? { ...item, status: 'approved' } : item,
         ),
       )
+      applyRoomBookingLock(bookingRoom, booking, payment)
       setRecentActivity((current) => [
         {
           id: `activity-${Date.now()}`,
@@ -565,13 +627,20 @@ export function AppDataProvider({ children }) {
         ...current,
       ])
       return payment
-    } catch {
+    } catch (error) {
+      if (error?.response) {
+        throw new Error(
+          error.response.data?.message || 'Unable to complete your payment right now.',
+        )
+      }
+
       setPayments((current) => [fallbackPayment, ...current])
       setBookings((current) =>
         current.map((item) =>
           item.id === bookingId ? { ...item, status: 'approved' } : item,
         ),
       )
+      applyRoomBookingLock(bookingRoom, booking, fallbackPayment)
       setRecentActivity((current) => [
         {
           id: `activity-${Date.now()}`,
@@ -613,6 +682,9 @@ export function AppDataProvider({ children }) {
       images,
       accent: 'from-brand-100 to-brand-50',
       amenities: payload.amenities?.length ? payload.amenities : ['Security'],
+      bookingLockedUntil: '',
+      bookingLockBookingId: '',
+      bookingLockPaymentId: '',
       description:
         normalizedDescription ||
         `Comfortable ${payload.roomType.toLowerCase()} in ${normalizedLocation.area}.`,

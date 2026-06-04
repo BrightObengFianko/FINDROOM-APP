@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import AppShell from '../../components/layout/AppShell'
 import { useAppData } from '../../context/AppDataContext'
+import { getRoomBookingLockLabel, isRoomBookingLocked } from '../../utils/bookingAvailability'
 import {
   clearBookingDraft,
   getBookingReference,
@@ -78,6 +79,29 @@ function BookingPaymentPage() {
           <div className="mt-5 flex flex-wrap justify-center gap-3">
             <Link className="action-button-secondary" to={`/rooms/${room.id}/book`}>
               Back to booking
+            </Link>
+            <Link className="action-button-primary" to="/rooms">
+              Browse rooms
+            </Link>
+          </div>
+        </section>
+      </AppShell>
+    )
+  }
+
+  const isBooked = isRoomBookingLocked(room)
+
+  if (isBooked) {
+    return (
+      <AppShell title="Payment unavailable" subtitle="This room is already booked.">
+        <section className="section-card text-center">
+          <p className="text-base font-semibold text-ink">{getRoomBookingLockLabel(room)}.</p>
+          <p className="mt-2 app-muted">
+            The booking period has not ended yet, so payment cannot continue for a new reservation.
+          </p>
+          <div className="mt-5 flex flex-wrap justify-center gap-3">
+            <Link className="action-button-secondary" to={`/rooms/${room.id}`}>
+              View room details
             </Link>
             <Link className="action-button-primary" to="/rooms">
               Browse rooms

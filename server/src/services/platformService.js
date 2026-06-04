@@ -29,11 +29,22 @@ const {
   resolveScopedUserId,
 } = require('../utils/userHelpers')
 const { applyUserRoles, canAssumeRole, resolveAllowedRoles } = require('../utils/roles')
+const {
+  calculateBookingLockUntilDate,
+  getRoomBookingLockLabel,
+  isRoomBookingLocked,
+} = require('../utils/bookingAvailability')
 
 const clone = (value) => JSON.parse(JSON.stringify(value))
 
 const normalizeId = (value) =>
   typeof value === 'string' ? value : value?.toString?.()
+
+const createHttpError = (message, statusCode = 400) => {
+  const error = new Error(message)
+  error.statusCode = statusCode
+  return error
+}
 
 const canUseMongoUserRelations = () => isDbConnected() && !isMySqlConnected()
 
@@ -73,10 +84,19 @@ const serializeUser = (user) => {
 const serializeRoom = (room) => {
   const raw = serializeEntity(room)
 
-  if (raw?.landlord && typeof raw.landlord === 'object') {
-    raw.landlordId = normalizeId(raw.landlord.id || raw.landlord._id)
-    raw.landlordName = raw.landlord.name || raw.landlordName
+  if (raw?.landlord) {
+    if (typeof raw.landlord === 'object') {
+      raw.landlordId = normalizeId(raw.landlord.id || raw.landlord._id || raw.landlord)
+      raw.landlordName = raw.landlord.name || raw.landlordName
+    } else {
+      raw.landlordId = normalizeId(raw.landlord)
+    }
+
     delete raw.landlord
+  }
+
+  if (raw?.landlordId) {
+    raw.landlordId = normalizeId(raw.landlordId)
   }
 
   return raw
@@ -166,6 +186,40 @@ const matchesRoomFilters = (room, filters) => {
 }
 
 const findMockRoom = (roomId) => mockStore.rooms.find((room) => room.id === roomId)
+
+const updateRoomBookingLock = async (roomId, updates = {}) => {
+  if (!roomId) {
+    return null
+  }
+
+  if (isDbConnected()) {
+    const updated = await Room.findByIdAndUpdate(
+      roomId,
+      {
+        bookingLockedUntil: updates.bookingLockedUntil || '',
+        bookingLockBookingId: updates.bookingLockBookingId || '',
+        bookingLockPaymentId: updates.bookingLockPaymentId || '',
+      },
+      { new: true },
+    )
+
+    return serializeRoom(updated)
+  }
+
+  const room = mockStore.rooms.find((candidate) => candidate.id === roomId)
+
+  if (!room) {
+    return null
+  }
+
+  Object.assign(room, {
+    bookingLockedUntil: updates.bookingLockedUntil || '',
+    bookingLockBookingId: updates.bookingLockBookingId || '',
+    bookingLockPaymentId: updates.bookingLockPaymentId || '',
+  })
+
+  return clone(room)
+}
 
 const getLandlordRoomIds = (landlordId, rooms) =>
   rooms.filter((room) => room.landlordId === landlordId).map((room) => room.id)
@@ -394,7 +448,9 @@ async function getRooms(filters = {}) {
       query.amenities = { $all: String(filters.amenities).split(',').filter(Boolean) }
     }
 
-    const rooms = await Room.find(query).sort({ createdAt: -1 })
+    const rooms = await Room.find(query)
+      .sort({ createdAt: -1 })
+      .populate('landlord', 'name email avatar bio role roles')
     return rooms.map(serializeRoom)
   }
 
@@ -403,7 +459,9 @@ async function getRooms(filters = {}) {
 
 async function getRoomById(roomId) {
   if (isDbConnected()) {
-    return serializeRoom(await Room.findById(roomId))
+    return serializeRoom(
+      await Room.findById(roomId).populate('landlord', 'name email avatar bio role roles'),
+    )
   }
 
   return clone(findMockRoom(roomId))
@@ -423,11 +481,22 @@ async function getBookingsForUser(user) {
   return clone(filterScopedBookings(mockStore.bookings, user, mockStore.rooms))
 }
 
-async function createBooking(user, roomId) {
+async function createBooking(user, roomId, bookingDetails = {}) {
   const room = await getRoomById(roomId)
 
   if (!room) {
-    throw new Error('Room not found.')
+    throw createHttpError('Room not found.', 404)
+  }
+
+  if (room.status !== 'approved') {
+    throw createHttpError('This room is not approved for booking yet.', 409)
+  }
+
+  if (isRoomBookingLocked(room)) {
+    throw createHttpError(
+      `${getRoomBookingLockLabel(room)}.`,
+      409,
+    )
   }
 
   if (canUseMongoUserRelations()) {
@@ -436,8 +505,8 @@ async function createBooking(user, roomId) {
       roomTitle: room.title,
       user: user.id,
       amount: room.price,
-      startDate: room.availableFrom,
-      duration: '1 month',
+      startDate: bookingDetails.startDate || room.availableFrom,
+      duration: bookingDetails.duration || '1 month',
       status: 'pending',
     })
 
@@ -450,8 +519,8 @@ async function createBooking(user, roomId) {
     roomTitle: room.title,
     userId: getScopedUserId(user),
     amount: room.price,
-    startDate: room.availableFrom,
-    duration: '1 month',
+    startDate: bookingDetails.startDate || room.availableFrom,
+    duration: bookingDetails.duration || '1 month',
     status: 'pending',
     createdAt: new Date().toISOString(),
   }
@@ -579,7 +648,17 @@ async function createMockPayment(user, bookingId) {
   const booking = bookings.find((item) => item.id === bookingId)
 
   if (!booking) {
-    throw new Error('Booking not found.')
+    throw createHttpError('Booking not found.', 404)
+  }
+
+  const room = await getRoomById(booking.roomId)
+
+  if (!room) {
+    throw createHttpError('Room not found.', 404)
+  }
+
+  if (isRoomBookingLocked(room) && room.bookingLockBookingId !== booking.id) {
+    throw createHttpError(`${getRoomBookingLockLabel(room)}.`, 409)
   }
 
   if (canUseMongoUserRelations()) {
@@ -592,6 +671,17 @@ async function createMockPayment(user, bookingId) {
     })
 
     await Booking.findByIdAndUpdate(booking.id, { status: 'approved' })
+    const bookingLockedUntil = calculateBookingLockUntilDate({
+      startDate: booking.startDate,
+      durationMonths: booking.durationMonths,
+      duration: booking.duration,
+    })
+
+    await updateRoomBookingLock(room.id, {
+      bookingLockedUntil,
+      bookingLockBookingId: booking.id,
+      bookingLockPaymentId: payment.id,
+    })
     return serializePayment(payment)
   }
 
@@ -610,6 +700,17 @@ async function createMockPayment(user, bookingId) {
   if (target) {
     target.status = 'approved'
   }
+  const bookingLockedUntil = calculateBookingLockUntilDate({
+    startDate: booking.startDate,
+    durationMonths: booking.durationMonths,
+    duration: booking.duration,
+  })
+
+  await updateRoomBookingLock(room.id, {
+    bookingLockedUntil,
+    bookingLockBookingId: booking.id,
+    bookingLockPaymentId: payment.id,
+  })
 
   return clone(payment)
 }

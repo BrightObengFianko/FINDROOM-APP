@@ -5,6 +5,7 @@ import AppShell from '../components/layout/AppShell'
 import StatusBadge from '../components/common/StatusBadge'
 import { useAppData } from '../context/AppDataContext'
 import { useAuth } from '../context/AuthContext'
+import { getRoomBookingLockLabel, isRoomBookingLocked } from '../utils/bookingAvailability'
 import { formatCurrency, formatDate } from '../utils/format'
 
 const formatRoomLocation = (room) => [...new Set([room.area, room.location].filter(Boolean))].join(', ')
@@ -28,7 +29,14 @@ function RoomDetailsPage() {
   const landlord = userMap[room.landlordId]
   const displayImage = room.images.includes(selectedImage) ? selectedImage : room.images[0]
   const isFavorite = favorites.includes(room.id)
-  const canBook = room.status === 'approved'
+  const isBooked = isRoomBookingLocked(room)
+  const canBook = room.status === 'approved' && !isBooked
+  const bookingStatusLabel =
+    room.status !== 'approved'
+      ? 'This listing must be approved before guests can continue to checkout.'
+      : isBooked
+        ? `${getRoomBookingLockLabel(room)}.`
+        : 'Room requests and payments stay visible in your dashboard after booking.'
 
   const requireAuth = (callback) => {
     if (!isAuthenticated) {
@@ -161,7 +169,9 @@ function RoomDetailsPage() {
                 disabled
                 type="button"
               >
-                Booking unavailable
+                {room.status !== 'approved'
+                  ? 'Booking unavailable'
+                  : getRoomBookingLockLabel(room) || 'Booking unavailable'}
               </button>
             )}
 
@@ -179,11 +189,7 @@ function RoomDetailsPage() {
                 <ShieldCheck size={16} />
                 Booking protection
               </p>
-              <p className="mt-2">
-                {canBook
-                  ? 'Room requests and payments stay visible in your dashboard after booking.'
-                  : 'This listing must be approved before guests can continue to checkout.'}
-              </p>
+              <p className="mt-2">{bookingStatusLabel}</p>
             </div>
           </article>
         </aside>

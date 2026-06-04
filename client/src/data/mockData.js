@@ -104,6 +104,9 @@ export const mockRooms = [
       'A cozy and fully furnished studio apartment in a serene neighborhood. Close to shops, restaurants, and major roads.',
     summary:
       'Ideal for one person, with a soft living corner and private bath.',
+    bookingLockedUntil: '2026-11-21',
+    bookingLockBookingId: 'booking-1',
+    bookingLockPaymentId: 'payment-1',
   },
   {
     id: 'room-102',

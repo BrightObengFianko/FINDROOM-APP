@@ -1,11 +1,15 @@
 import { Heart, MapPin, Star } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { getRoomBookingLockLabel, isRoomBookingLocked } from '../../utils/bookingAvailability'
 import { formatCurrency } from '../../utils/format'
 
 const formatRoomLocation = (room) => [...new Set([room.area, room.location].filter(Boolean))].join(', ')
 
 function RoomCard({ room, isFavorite, onToggleFavorite }) {
-  const canBook = room.status === 'approved'
+  const isBooked = isRoomBookingLocked(room)
+  const canBook = room.status === 'approved' && !isBooked
+  const unavailableLabel =
+    room.status !== 'approved' ? 'Unavailable' : getRoomBookingLockLabel(room) || 'Unavailable'
 
   return (
     <article className="panel overflow-hidden transition duration-200 hover:-translate-y-0.5">
@@ -66,7 +70,7 @@ function RoomCard({ room, isFavorite, onToggleFavorite }) {
                 disabled
                 type="button"
               >
-                Unavailable
+                {unavailableLabel}
               </button>
             )}
             <Link className="action-button-secondary px-3 py-2" to={`/rooms/${room.id}`}>
