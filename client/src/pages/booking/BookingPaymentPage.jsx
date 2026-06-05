@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import AppShell from '../../components/layout/AppShell'
 import { useAppData } from '../../context/AppDataContext'
+import { resolveRoomDigitalAddress } from '../../utils/roomLookup'
 import { getRoomBookingLockLabel, isRoomBookingLocked } from '../../utils/bookingAvailability'
 import {
   clearBookingDraft,
@@ -176,6 +177,7 @@ function BookingPaymentPage() {
         roomId: room.id,
         roomTitle: room.title,
         roomLocation: formatRoomLocation(room),
+        roomDigitalAddress: resolveRoomDigitalAddress(room),
         roomImage: room.images[0],
         amountPaid: payment.amount ?? checkoutDraft.totalAmount,
         bookingStatus: booking.status === 'pending' ? 'approved' : booking.status || 'approved',

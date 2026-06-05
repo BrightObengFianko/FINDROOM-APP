@@ -3,6 +3,7 @@ const statusStyles = {
   Confirmed: 'bg-[#eef9ef] text-[#23933d]',
   Completed: 'bg-[#eef9ef] text-[#23933d]',
   Pending: 'bg-[#fff5df] text-[#d89214]',
+  'Pending review': 'bg-[#fff5df] text-[#d89214]',
   Cancelled: 'bg-[#fff1f1] text-[#e35656]',
   Inactive: 'bg-[#f4f6f8] text-[#64748b]',
 }

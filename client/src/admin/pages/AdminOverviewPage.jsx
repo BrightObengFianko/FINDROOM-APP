@@ -1,7 +1,9 @@
 import { Bell, Download } from 'lucide-react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import AppShell from '../../components/layout/AppShell'
+import ListingPreviewPanel from '../../components/common/ListingPreviewPanel'
 import StatusBadge from '../../components/common/StatusBadge'
 import { formatDate } from '../../utils/format'
 import AdminMetricCard from '../components/AdminMetricCard'
@@ -11,6 +13,9 @@ function AdminOverviewPage() {
   const { user } = useAuth()
   const { overviewCards, recentListings, recentActivity, notifications } = useAdminWorkspace()
   const firstName = user?.name?.split(' ')[0] || 'Admin'
+  const [selectedListingId, setSelectedListingId] = useState('')
+  const previewListing =
+    recentListings.find((listing) => listing.id === selectedListingId) || recentListings[0] || null
 
   return (
     <AppShell
@@ -52,17 +57,66 @@ function AdminOverviewPage() {
             </Link>
           </div>
 
+          <div className="mb-4">
+            <ListingPreviewPanel
+              badge={previewListing ? <StatusBadge status={previewListing.status} /> : null}
+              helperText="Click a room image below to preview it here."
+              image={previewListing?.images?.[0]}
+              imageAlt={previewListing?.title}
+              subtitle={
+                previewListing
+                  ? `${previewListing.location} - ${previewListing.landlordName}`
+                  : 'No recent listings to preview.'
+              }
+              title={previewListing?.title}
+            >
+              {previewListing ? (
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
+                      Price
+                    </p>
+                    <p className="mt-1 font-semibold text-ink">{previewListing.price}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
+                      Views
+                    </p>
+                    <p className="mt-1 font-semibold text-ink">{previewListing.views} views</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
+                      Submitted
+                    </p>
+                    <p className="mt-1 font-semibold text-ink">{formatDate(previewListing.submittedDate)}</p>
+                  </div>
+                </div>
+              ) : null}
+            </ListingPreviewPanel>
+          </div>
+
           <div className="space-y-3">
             {recentListings.map((listing) => (
               <div
                 className="flex flex-col gap-4 rounded-[18px] border border-slate-100 p-3 sm:flex-row sm:items-center sm:rounded-[20px] sm:p-4"
                 key={listing.id}
               >
-                <img
-                  alt={listing.title}
-                  className="h-20 w-full rounded-[18px] object-cover sm:h-20 sm:w-24 sm:rounded-[20px]"
-                  src={listing.images[0]}
-                />
+                <button
+                  aria-label={`Preview ${listing.title}`}
+                  className={`overflow-hidden rounded-[18px] border transition sm:h-20 sm:w-24 sm:rounded-[20px] ${
+                    previewListing?.id === listing.id
+                      ? 'border-brand-400 ring-2 ring-brand-100'
+                      : 'border-slate-100 hover:border-brand-200'
+                  }`}
+                  onClick={() => setSelectedListingId(listing.id)}
+                  type="button"
+                >
+                  <img
+                    alt={listing.title}
+                    className="h-20 w-full object-cover sm:h-20 sm:w-24"
+                    src={listing.images[0]}
+                  />
+                </button>
 
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-semibold text-ink">{listing.title}</p>

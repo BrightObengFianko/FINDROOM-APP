@@ -454,13 +454,14 @@ function LandlordAddListingPage() {
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/30 px-4 py-4 sm:items-center">
           <div className="panel w-full max-w-md p-5 sm:p-6">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand-700">
-              Success
+              Review queued
             </p>
             <h2 className="mt-3 text-xl font-extrabold text-ink sm:text-2xl">
-              Listing submitted successfully
+              Listing submitted for admin review
             </h2>
             <p className="mt-3 text-sm leading-6 text-slate-500">
-              {createdListing.title} is now available in search listings and your landlord dashboard.
+              {createdListing.title} has been sent to the admin review queue. It will only appear
+              in Search Rooms after it is approved.
             </p>
 
             <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
@@ -473,10 +474,10 @@ function LandlordAddListingPage() {
               </button>
               <button
                 className="action-button-primary w-full justify-center sm:w-auto"
-                onClick={() => navigate('/rooms')}
+                onClick={() => navigate('/landlord/listings')}
                 type="button"
               >
-                View search listings
+                View my listings
               </button>
             </div>
           </div>

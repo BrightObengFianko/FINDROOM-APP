@@ -61,6 +61,7 @@ const seedRooms = async (createdUsers) => {
       title: room.title,
       location: room.location,
       area: room.area,
+      digitalAddress: room.digitalAddress || '',
       roomType: room.roomType,
       price: room.price,
       rating: room.rating,

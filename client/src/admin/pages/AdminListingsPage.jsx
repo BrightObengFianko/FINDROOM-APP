@@ -1,6 +1,8 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
+import { BadgeCheck, XCircle } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import AppShell from '../../components/layout/AppShell'
+import ListingPreviewPanel from '../../components/common/ListingPreviewPanel'
 import StatusBadge from '../../components/common/StatusBadge'
 import AdminActionMenu from '../components/AdminActionMenu'
 import AdminDataTable from '../components/AdminDataTable'
@@ -18,7 +20,16 @@ function AdminListingsPage() {
   const [query, setQuery] = useState('')
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(4)
+  const [selectedListingId, setSelectedListingId] = useState('')
   const [pendingDeletion, setPendingDeletion] = useState(null)
+  const [feedbackModal, setFeedbackModal] = useState({
+    open: false,
+    title: '',
+    description: '',
+    primaryActionLabel: 'Close',
+    icon: null,
+    iconClassName: '',
+  })
 
   const tabs = [
     { key: 'all', label: 'All Listings', count: listingStatusCounts.all },
@@ -40,17 +51,75 @@ function AdminListingsPage() {
   }, [activeTab, listings, query])
 
   const totalPages = Math.max(1, Math.ceil(filteredListings.length / pageSize))
-  const paginatedListings = paginateRows(filteredListings, page, pageSize)
+  const safePage = Math.min(page, totalPages)
+  const paginatedListings = paginateRows(filteredListings, safePage, pageSize)
+  const previewListing =
+    paginatedListings.find((listing) => listing.id === selectedListingId) || paginatedListings[0] || null
 
-  useEffect(() => {
+  const openFeedbackModal = (
+    title,
+    description,
+    primaryActionLabel = 'Close',
+    icon = null,
+    iconClassName = '',
+  ) => {
+    setFeedbackModal({
+      open: true,
+      title,
+      description,
+      primaryActionLabel,
+      icon,
+      iconClassName,
+    })
+  }
+
+  const closeFeedbackModal = () => {
+    setFeedbackModal({
+      open: false,
+      title: '',
+      description: '',
+      primaryActionLabel: 'Close',
+      icon: null,
+      iconClassName: '',
+    })
+  }
+
+  const handleApprove = (listing) => {
+    updateListingStatus(listing.id, 'Approved')
+    openFeedbackModal(
+      'Room approved',
+      `${listing.title} has been approved and is now available in Search Rooms.`,
+      'Close',
+      <BadgeCheck size={24} />,
+      'bg-emerald-50 text-emerald-600',
+    )
+  }
+
+  const handleReject = (listing) => {
+    updateListingStatus(listing.id, 'Rejected')
+    openFeedbackModal(
+      'Room rejected',
+      `${listing.title} has been rejected and will not appear in Search Rooms.`,
+      'Close',
+      <XCircle size={24} />,
+      'bg-rose-50 text-rose-600',
+    )
+  }
+
+  const handleTabChange = (nextTab) => {
+    setActiveTab(nextTab)
     setPage(1)
-  }, [activeTab, query, pageSize])
+  }
 
-  useEffect(() => {
-    if (page > totalPages) {
-      setPage(totalPages)
-    }
-  }, [page, totalPages])
+  const handleSearchChange = (value) => {
+    setQuery(value)
+    setPage(1)
+  }
+
+  const handlePageSizeChange = (nextPageSize) => {
+    setPageSize(nextPageSize)
+    setPage(1)
+  }
 
   const columns = [
     {
@@ -58,7 +127,18 @@ function AdminListingsPage() {
       label: 'Property',
       render: (listing) => (
         <div className="flex items-center gap-3">
-          <img alt={listing.title} className="h-12 w-12 rounded-xl object-cover" src={listing.images[0]} />
+          <button
+            aria-label={`Preview ${listing.title}`}
+            className={`overflow-hidden rounded-xl border transition ${
+              previewListing?.id === listing.id
+                ? 'border-brand-400 ring-2 ring-brand-100'
+                : 'border-slate-100 hover:border-brand-200'
+            }`}
+            onClick={() => setSelectedListingId(listing.id)}
+            type="button"
+          >
+            <img alt={listing.title} className="h-12 w-12 object-cover" src={listing.images[0]} />
+          </button>
           <div>
             <p className="font-semibold text-ink">{listing.title}</p>
             <p className="text-sm text-slate-500">{listing.location}</p>
@@ -100,11 +180,11 @@ function AdminListingsPage() {
             actions={[
               {
                 label: 'Approve listing',
-                onClick: () => updateListingStatus(listing.id, 'Approved'),
+                onClick: () => handleApprove(listing),
               },
               {
                 label: 'Reject listing',
-                onClick: () => updateListingStatus(listing.id, 'Rejected'),
+                onClick: () => handleReject(listing),
               },
               {
                 label: 'Delete listing',
@@ -119,19 +199,59 @@ function AdminListingsPage() {
   ]
 
   return (
-    <AppShell subtitle="Review and manage platform property listings." title="Listings">
+    <AppShell
+      subtitle="Review submitted rooms, approve them into Search Rooms, or reject them if they need changes."
+      title="Listings"
+    >
       <section className="section-card">
-        <AdminSectionTabs activeTab={activeTab} onChange={setActiveTab} tabs={tabs} />
+        <AdminSectionTabs activeTab={activeTab} onChange={handleTabChange} tabs={tabs} />
         <AdminPageToolbar
-          onSearchChange={setQuery}
+          onSearchChange={handleSearchChange}
           searchPlaceholder="Search listings..."
           searchValue={query}
         />
+        <div className="mb-5">
+          <ListingPreviewPanel
+            badge={previewListing ? <StatusBadge status={previewListing.status} /> : null}
+            helperText="Click a thumbnail in the table to preview it above."
+            image={previewListing?.images?.[0]}
+            imageAlt={previewListing?.title}
+            subtitle={
+              previewListing
+                ? `${previewListing.landlordName} • ${previewListing.location}`
+                : 'No listings available to preview.'
+            }
+            title={previewListing?.title}
+          >
+            {previewListing ? (
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
+                    Price
+                  </p>
+                  <p className="mt-1 font-semibold text-ink">{formatCurrency(previewListing.price)}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
+                    Landlord
+                  </p>
+                  <p className="mt-1 font-semibold text-ink">{previewListing.landlordName}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
+                    Submitted
+                  </p>
+                  <p className="mt-1 font-semibold text-ink">{formatDate(previewListing.submittedDate)}</p>
+                </div>
+              </div>
+            ) : null}
+          </ListingPreviewPanel>
+        </div>
         <AdminDataTable columns={columns} rows={paginatedListings} />
         <AdminPagination
           onPageChange={setPage}
-          onPageSizeChange={setPageSize}
-          page={page}
+          onPageSizeChange={handlePageSizeChange}
+          page={safePage}
           pageSize={pageSize}
           totalItems={filteredListings.length}
           totalPages={totalPages}
@@ -142,7 +262,12 @@ function AdminListingsPage() {
         description={pendingDeletion ? `Delete ${pendingDeletion.title} from the admin workspace?` : ''}
         onPrimaryAction={() => {
           if (pendingDeletion) {
+            const deletedListing = pendingDeletion
             deleteListing(pendingDeletion.id)
+            openFeedbackModal(
+              'Room deleted',
+              `${deletedListing.title} has been deleted from the admin workspace.`,
+            )
           }
           setPendingDeletion(null)
         }}
@@ -151,6 +276,17 @@ function AdminListingsPage() {
         primaryActionClassName="action-button-secondary border-rose-200 text-rose-600 hover:bg-rose-50"
         primaryActionLabel="Delete listing"
         title="Delete listing"
+      />
+
+      <AdminModal
+        description={feedbackModal.description}
+        icon={feedbackModal.icon}
+        iconClassName={feedbackModal.iconClassName}
+        onPrimaryAction={closeFeedbackModal}
+        onSecondaryAction={closeFeedbackModal}
+        open={feedbackModal.open}
+        primaryActionLabel={feedbackModal.primaryActionLabel}
+        title={feedbackModal.title}
       />
     </AppShell>
   )

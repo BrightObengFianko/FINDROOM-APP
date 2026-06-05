@@ -1,6 +1,7 @@
 import { Eye, Pencil, Plus, Search, SlidersHorizontal, Trash2 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import ListingPreviewPanel from '../../components/common/ListingPreviewPanel'
 import StatusBadge from '../../components/common/StatusBadge'
 import { useAppData } from '../../context/AppDataContext'
 import AppShell from '../../components/layout/AppShell'
@@ -15,8 +16,12 @@ const formatListingStatusLabel = (status = '') => {
     return 'Active'
   }
 
+  if (normalizedStatus === 'pending') {
+    return 'Pending review'
+  }
+
   if (!normalizedStatus) {
-    return 'Pending'
+    return 'Pending review'
   }
 
   return normalizedStatus.charAt(0).toUpperCase() + normalizedStatus.slice(1)
@@ -55,6 +60,7 @@ function LandlordListingsPage() {
   const navigate = useNavigate()
   const { bookings, deleteListing } = useAppData()
   const [query, setQuery] = useState('')
+  const [selectedListingId, setSelectedListingId] = useState('')
 
   const filteredListings = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase()
@@ -99,6 +105,8 @@ function LandlordListingsPage() {
       }),
     [bookings, filteredListings],
   )
+  const previewListing =
+    listingRows.find((listing) => listing.id === selectedListingId) || listingRows[0] || null
 
   const handleView = (listingId) => {
     navigate(`/rooms/${listingId}`)
@@ -146,6 +154,40 @@ function LandlordListingsPage() {
           </button>
         </div>
 
+        <div className="mb-5">
+          <ListingPreviewPanel
+            badge={previewListing ? <StatusBadge status={previewListing.statusLabel} /> : null}
+            helperText="Click a photo in the table to preview it above."
+            image={previewListing?.image}
+            imageAlt={previewListing?.title}
+            subtitle={previewListing ? previewListing.location : 'No listings available to preview.'}
+            title={previewListing?.title}
+          >
+            {previewListing ? (
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
+                    Monthly rent
+                  </p>
+                  <p className="mt-1 font-semibold text-ink">{previewListing.monthlyPrice}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
+                    Bookings
+                  </p>
+                  <p className="mt-1 font-semibold text-ink">{previewListing.bookingsLabel}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
+                    Views
+                  </p>
+                  <p className="mt-1 font-semibold text-ink">{previewListing.ratingLabel}</p>
+                </div>
+              </div>
+            ) : null}
+          </ListingPreviewPanel>
+        </div>
+
         {listingRows.length ? (
           <div className="overflow-hidden rounded-[20px] border border-slate-200 bg-white sm:rounded-[22px]">
             <div className="overflow-x-auto">
@@ -190,11 +232,22 @@ function LandlordListingsPage() {
                   {listingRows.map((listing) => (
                     <tr className="align-middle" key={listing.id}>
                       <td className="px-2.5 py-2.5 align-middle sm:px-3 sm:py-3">
-                        <img
-                          alt={listing.title}
-                          className="h-12 w-12 rounded-lg object-cover sm:h-14 sm:w-14 sm:rounded-xl"
-                          src={listing.image}
-                        />
+                        <button
+                          aria-label={`Preview ${listing.title}`}
+                          className={`overflow-hidden rounded-lg border transition sm:rounded-xl ${
+                            previewListing?.id === listing.id
+                              ? 'border-brand-400 ring-2 ring-brand-100'
+                              : 'border-slate-100 hover:border-brand-200'
+                          }`}
+                          onClick={() => setSelectedListingId(listing.id)}
+                          type="button"
+                        >
+                          <img
+                            alt={listing.title}
+                            className="h-12 w-12 object-cover sm:h-14 sm:w-14"
+                            src={listing.image}
+                          />
+                        </button>
                       </td>
 
                       <td className="min-w-0 border-l border-slate-100 px-3 py-2.5 align-middle sm:px-4 sm:py-3">

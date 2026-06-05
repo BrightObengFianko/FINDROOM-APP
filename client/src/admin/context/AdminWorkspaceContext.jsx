@@ -1,5 +1,9 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
+import {
+  removeStoredLandlordRoom,
+  syncStoredLandlordRoomStatus,
+} from '../../utils/landlordRoomStorage'
 import { persistAdminWorkspace, loadAdminWorkspace } from '../services/adminService'
 
 const AdminWorkspaceContext = createContext(null)
@@ -142,6 +146,8 @@ export function AdminWorkspaceProvider({ children }) {
       ),
     }))
 
+    syncStoredLandlordRoomStatus(listingId, status)
+
     const listing = workspace.listings.find((candidate) => candidate.id === listingId)
     if (listing) {
       appendActivity(createActivityEntry(listing.title, `Listing marked as ${status.toLowerCase()}`, status))
@@ -165,6 +171,7 @@ export function AdminWorkspaceProvider({ children }) {
       listings: current.listings.filter((candidate) => candidate.id !== listingId),
       bookings: current.bookings.filter((booking) => booking.listingId !== listingId),
     }))
+    removeStoredLandlordRoom(listingId)
 
     if (listing) {
       appendActivity(createActivityEntry(listing.title, 'Listing deleted from platform', 'Removed'))

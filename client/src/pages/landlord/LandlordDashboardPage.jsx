@@ -5,9 +5,11 @@ import {
   MessageCircleMore,
   WalletCards,
 } from 'lucide-react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import StatCard from '../../components/common/StatCard'
 import StatusBadge from '../../components/common/StatusBadge'
+import ListingPreviewPanel from '../../components/common/ListingPreviewPanel'
 import LandlordChartPlaceholder from '../../components/landlord/LandlordChartPlaceholder'
 import AppShell from '../../components/layout/AppShell'
 import { useAuth } from '../../context/AuthContext'
@@ -19,9 +21,11 @@ function LandlordDashboardPage() {
   const { user } = useAuth()
   const { chartLabels, chartPoints, listings, overviewStats, recentBookings, summaryCards } =
     useLandlordWorkspace()
+  const [selectedListingId, setSelectedListingId] = useState('')
 
   const firstName = user?.name?.split(' ')[0] || 'there'
   const highlightedListing = listings[0]
+  const previewListing = listings.find((listing) => listing.id === selectedListingId) || listings[0] || null
 
   return (
     <AppShell
@@ -136,6 +140,40 @@ function LandlordDashboardPage() {
             </Link>
           </div>
 
+          <div className="mb-4">
+            <ListingPreviewPanel
+              badge={previewListing ? <StatusBadge status={previewListing.status} /> : null}
+              helperText="Click a listing image below to preview it here."
+              image={previewListing?.image}
+              imageAlt={previewListing?.title}
+              subtitle={previewListing ? previewListing.location : 'No listings to preview.'}
+              title={previewListing?.title}
+            >
+              {previewListing ? (
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
+                      Price
+                    </p>
+                    <p className="mt-1 font-semibold text-ink">{previewListing.price} / month</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
+                      Bookings
+                    </p>
+                    <p className="mt-1 font-semibold text-ink">{previewListing.bookings}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
+                      Views
+                    </p>
+                    <p className="mt-1 font-semibold text-ink">{previewListing.views}</p>
+                  </div>
+                </div>
+              ) : null}
+            </ListingPreviewPanel>
+          </div>
+
           {listings.length ? (
             <div className="space-y-3">
               {listings.slice(0, 3).map((listing) => (
@@ -143,11 +181,22 @@ function LandlordDashboardPage() {
                   className="flex flex-col gap-4 rounded-[18px] border border-slate-100 p-3 md:flex-row md:items-center md:rounded-[20px] md:p-4"
                   key={listing.id}
                 >
-                  <img
-                    alt={listing.title}
-                    className="h-20 w-full rounded-[18px] object-cover md:h-20 md:w-24 md:rounded-[20px]"
-                    src={listing.image}
-                  />
+                  <button
+                    aria-label={`Preview ${listing.title}`}
+                    className={`overflow-hidden rounded-[18px] border transition md:h-20 md:w-24 md:rounded-[20px] ${
+                      previewListing?.id === listing.id
+                        ? 'border-brand-400 ring-2 ring-brand-100'
+                        : 'border-slate-100 hover:border-brand-200'
+                    }`}
+                    onClick={() => setSelectedListingId(listing.id)}
+                    type="button"
+                  >
+                    <img
+                      alt={listing.title}
+                      className="h-20 w-full object-cover md:h-20 md:w-24"
+                      src={listing.image}
+                    />
+                  </button>
 
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-semibold text-ink">{listing.title}</p>

@@ -11,12 +11,17 @@ import {
   mockUsers,
 } from '../data/mockData'
 import api from '../lib/api'
-import { upsertAdminWorkspaceLandlord } from '../admin/services/adminService'
+import {
+  removeAdminWorkspaceListing,
+  upsertAdminWorkspaceLandlord,
+  upsertAdminWorkspaceListing,
+} from '../admin/services/adminService'
 import {
   calculateBookingLockUntilDate,
   getRoomBookingLockLabel,
   isRoomBookingLocked,
 } from '../utils/bookingAvailability'
+import { LANDLORD_ROOM_SYNC_EVENT } from '../utils/landlordRoomStorage'
 import { resolveAllowedRoles } from '../utils/roles'
 import { useAuth } from './AuthContext'
 
@@ -258,7 +263,18 @@ export function AppDataProvider({ children }) {
       }
     }
 
+    const handleRoomSync = () => {
+      loadRooms()
+    }
+
     loadRooms()
+    window.addEventListener(LANDLORD_ROOM_SYNC_EVENT, handleRoomSync)
+    window.addEventListener('storage', handleRoomSync)
+
+    return () => {
+      window.removeEventListener(LANDLORD_ROOM_SYNC_EVENT, handleRoomSync)
+      window.removeEventListener('storage', handleRoomSync)
+    }
   }, [])
 
   useEffect(() => {
@@ -675,16 +691,19 @@ export function AppDataProvider({ children }) {
       roomType: payload.roomType,
       price: Number(payload.price),
       rating: 5,
-      status: 'approved',
+      status: 'pending',
       landlordId: user.id,
       landlordName: user.name,
       availableFrom: createdAt.slice(0, 10),
+      submittedDate: createdAt.slice(0, 10),
       images,
       accent: 'from-brand-100 to-brand-50',
       amenities: payload.amenities?.length ? payload.amenities : ['Security'],
       bookingLockedUntil: '',
       bookingLockBookingId: '',
       bookingLockPaymentId: '',
+      bookings: 0,
+      views: 0,
       description:
         normalizedDescription ||
         `Comfortable ${payload.roomType.toLowerCase()} in ${normalizedLocation.area}.`,
@@ -707,12 +726,13 @@ export function AppDataProvider({ children }) {
       persistDeletedRoomIds(storedDeletedRoomIds.filter((roomId) => roomId !== nextRoom.id))
       return nextRooms
     })
+    upsertAdminWorkspaceListing(nextRoom)
 
     setRecentActivity((current) => [
       {
         id: `activity-${Date.now()}`,
         title: 'Listing submitted',
-        description: `${nextRoom.title} was submitted successfully and is now visible in search listings.`,
+        description: `${nextRoom.title} was submitted successfully and is awaiting admin approval.`,
         createdAt,
       },
       ...current,
@@ -777,6 +797,7 @@ export function AppDataProvider({ children }) {
       storedRoomOverrides[roomId] = updatedRoom
     }
     persistLandlordRoomOverrides(storedRoomOverrides)
+    upsertAdminWorkspaceListing(updatedRoom)
 
     setRecentActivity((current) => [
       {
@@ -818,6 +839,7 @@ export function AppDataProvider({ children }) {
       ? storedDeletedRoomIds.filter((candidate) => candidate !== roomId)
       : Array.from(new Set([...storedDeletedRoomIds, roomId]))
     persistDeletedRoomIds(nextDeletedRoomIds)
+    removeAdminWorkspaceListing(roomId)
 
     setRecentActivity((current) => [
       {

@@ -6,6 +6,7 @@ const styles = {
   info: 'bg-sky-50 text-sky-700 ring-sky-100',
   ongoing: 'bg-brand-50 text-brand-700 ring-brand-100',
   pending: 'bg-amber-50 text-amber-700 ring-amber-100',
+  'pending review': 'bg-amber-50 text-amber-700 ring-amber-100',
   failed: 'bg-rose-50 text-rose-700 ring-rose-100',
   cancelled: 'bg-slate-100 text-slate-600 ring-slate-200',
   inactive: 'bg-slate-100 text-slate-600 ring-slate-200',

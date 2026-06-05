@@ -14,9 +14,13 @@ function SearchRoomsPage() {
   const { isAuthenticated } = useAuth()
   const filters = useMemo(() => filtersFromSearchParams(searchParams), [searchParams])
   const deferredLocation = useDeferredValue(filters.location)
+  const approvedRooms = useMemo(
+    () => rooms.filter((room) => room.status === 'approved'),
+    [rooms],
+  )
   const filteredRooms = useMemo(
-    () => filterRooms(rooms, { ...filters, location: deferredLocation }),
-    [deferredLocation, filters, rooms],
+    () => filterRooms(approvedRooms, { ...filters, location: deferredLocation }),
+    [approvedRooms, deferredLocation, filters],
   )
 
   const updateFilters = (updates) => {

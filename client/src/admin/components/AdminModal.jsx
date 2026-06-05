@@ -5,6 +5,8 @@ function AdminModal({
   title,
   description,
   children,
+  icon,
+  iconClassName = 'bg-slate-100 text-slate-600',
   primaryActionLabel = 'Confirm',
   secondaryActionLabel = 'Cancel',
   onPrimaryAction,
@@ -20,6 +22,14 @@ function AdminModal({
       <div className="panel flex w-full max-w-lg max-h-[calc(100dvh-1rem)] flex-col overflow-hidden p-4 shadow-2xl sm:max-h-[calc(100dvh-1.5rem)] sm:p-5">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
+            {icon ? (
+              <div
+                aria-hidden="true"
+                className={`mb-3 inline-flex h-12 w-12 items-center justify-center rounded-2xl ${iconClassName}`}
+              >
+                {icon}
+              </div>
+            ) : null}
             <h2 className="text-xl font-extrabold text-ink">{title}</h2>
             {description ? <p className="mt-2 text-sm leading-6 text-slate-500">{description}</p> : null}
           </div>

@@ -5,6 +5,7 @@ const roomSchema = new mongoose.Schema(
     title: { type: String, required: true, trim: true },
     location: { type: String, required: true, trim: true },
     area: { type: String, required: true, trim: true },
+    digitalAddress: { type: String, default: '' },
     roomType: {
       type: String,
       enum: ['Private Room', 'Studio', 'Shared Room'],

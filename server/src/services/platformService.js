@@ -50,6 +50,20 @@ const canUseMongoUserRelations = () => isDbConnected() && !isMySqlConnected()
 
 const getScopedUserId = (user) => resolveScopedUserId(user, mockStore.users)
 
+const isBcryptHash = (value) => typeof value === 'string' && /^\$2[aby]\$\d{2}\$/.test(value)
+
+const comparePassword = async (providedPassword, storedPassword) => {
+  if (typeof storedPassword !== 'string') {
+    return false
+  }
+
+  if (isBcryptHash(storedPassword)) {
+    return bcrypt.compare(providedPassword, storedPassword)
+  }
+
+  return providedPassword === storedPassword
+}
+
 const serializeEntity = (entity) => {
   if (!entity) {
     return null
@@ -97,6 +111,18 @@ const serializeRoom = (room) => {
 
   if (raw?.landlordId) {
     raw.landlordId = normalizeId(raw.landlordId)
+  }
+
+  if (raw && !raw.digitalAddress) {
+    const fallbackRoom = mockStore.rooms.find(
+      (candidate) =>
+        candidate.title === raw?.title &&
+        candidate.area === raw?.area &&
+        candidate.location === raw?.location &&
+        (!raw?.landlordName || candidate.landlordName === raw.landlordName),
+    )
+
+    raw.digitalAddress = fallbackRoom?.digitalAddress || ''
   }
 
   return raw
@@ -381,7 +407,7 @@ async function authenticateUser({ email, password, role }, requestMeta = {}) {
     return null
   }
 
-  const passwordMatches = await bcrypt.compare(password, user.password)
+  const passwordMatches = await comparePassword(password, user.password)
 
   if (!passwordMatches) {
     await recordLoginAttempt({
