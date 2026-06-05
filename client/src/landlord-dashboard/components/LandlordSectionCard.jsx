@@ -4,7 +4,7 @@ function LandlordSectionCard({ title, subtitle, action, children, className = ''
       className={`ld-card-shadow rounded-[22px] border border-[#e9eef2] bg-white p-5 ${className}`}
     >
       {title || action ? (
-        <div className="mb-4 flex items-start justify-between gap-4">
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
             {title ? (
               <h2 className="text-[16px] font-semibold tracking-[-0.02em] text-[#0f172a]">

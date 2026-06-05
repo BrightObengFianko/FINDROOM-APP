@@ -4,7 +4,9 @@ function LandlordPlaceholderPage({ title }) {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-[30px] font-bold tracking-[-0.03em] text-[#111827]">{title}</h1>
+        <h1 className="text-[26px] font-bold tracking-[-0.03em] text-[#111827] sm:text-[30px]">
+          {title}
+        </h1>
         <p className="mt-1 text-[14px] text-[#64748b]">
           This standalone preview keeps the sidebar destination in place for later integration.
         </p>

@@ -28,7 +28,9 @@ function LandlordListingsPage({ onSelect }) {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-[30px] font-bold tracking-[-0.03em] text-[#111827]">My Listings</h1>
+          <h1 className="text-[26px] font-bold tracking-[-0.03em] text-[#111827] sm:text-[30px]">
+            My Listings
+          </h1>
           <p className="mt-1 text-[14px] text-[#64748b]">
             Manage your properties and view their performance.
           </p>

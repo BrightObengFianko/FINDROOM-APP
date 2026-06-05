@@ -1,13 +1,17 @@
-import { Bell, ChevronDown, Menu } from 'lucide-react'
+import { Bell, ChevronDown, Menu, X } from 'lucide-react'
 
-function LandlordTopbar() {
+function LandlordTopbar({ isSidebarOpen, onMenuClick }) {
   return (
     <div className="mb-6 flex items-center justify-between gap-4">
       <button
+        aria-controls="landlord-sidebar"
+        aria-expanded={isSidebarOpen}
+        aria-label={isSidebarOpen ? 'Close dashboard menu' : 'Open dashboard menu'}
         className="inline-flex h-11 w-11 items-center justify-center rounded-[14px] border border-[#e8edf1] bg-white text-[#475569] xl:hidden"
+        onClick={onMenuClick}
         type="button"
       >
-        <Menu size={18} />
+        {isSidebarOpen ? <X size={18} /> : <Menu size={18} />}
       </button>
 
       <div className="hidden xl:block" />

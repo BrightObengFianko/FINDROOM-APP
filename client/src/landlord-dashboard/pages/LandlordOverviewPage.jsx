@@ -17,7 +17,7 @@ function LandlordOverviewPage({ onSelect }) {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-[30px] font-bold tracking-[-0.03em] text-[#111827]">
+        <h1 className="text-[26px] font-bold tracking-[-0.03em] text-[#111827] sm:text-[30px]">
           Welcome back, John!
         </h1>
         <p className="mt-1 text-[14px] text-[#64748b]">
@@ -53,7 +53,7 @@ function LandlordOverviewPage({ onSelect }) {
           <div className="space-y-4">
             {recentBookings.map((booking) => (
               <div
-                className="flex items-center gap-4 rounded-[18px] border border-[#edf2f7] px-3 py-3"
+                className="flex flex-col gap-4 rounded-[18px] border border-[#edf2f7] px-3 py-3 sm:flex-row sm:items-center"
                 key={booking.id}
               >
                 <img
@@ -70,7 +70,7 @@ function LandlordOverviewPage({ onSelect }) {
                   <p className="mt-1 text-[11px] text-[#94a3b8]">{booking.dates}</p>
                 </div>
 
-                <div className="space-y-2 text-right">
+                <div className="space-y-2 text-left sm:text-right">
                   <LandlordStatusBadge status={booking.status} />
                   <p className="text-[13px] font-semibold text-[#111827]">{booking.amount}</p>
                 </div>

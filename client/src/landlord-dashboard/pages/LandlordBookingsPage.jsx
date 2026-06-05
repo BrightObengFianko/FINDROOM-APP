@@ -8,7 +8,9 @@ function LandlordBookingsPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <h1 className="text-[30px] font-bold tracking-[-0.03em] text-[#111827]">Bookings</h1>
+          <h1 className="text-[26px] font-bold tracking-[-0.03em] text-[#111827] sm:text-[30px]">
+            Bookings
+          </h1>
           <p className="mt-1 text-[14px] text-[#64748b]">View and manage all bookings.</p>
         </div>
 
@@ -54,7 +56,7 @@ function LandlordBookingsPage() {
                 className="grid gap-4 px-5 py-4 xl:grid-cols-[1.55fr_1fr_1fr_0.65fr_0.65fr_56px] xl:items-center"
                 key={booking.id}
               >
-                <div className="flex items-center gap-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
                   <img
                     alt={booking.property}
                     className="h-[60px] w-[76px] rounded-[14px] object-cover"

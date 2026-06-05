@@ -2,7 +2,7 @@ import { Lock, Mail, UserRound } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { getLandlordVerificationRedirect } from '../utils/landlordVerification'
+import { getPostLoginRedirect } from '../utils/loginRedirect'
 
 const signupRoleOptions = ['user', 'landlord']
 const loginRoleOptions = ['user', 'landlord', 'admin']
@@ -43,15 +43,9 @@ function AuthPage({ mode }) {
 
   useEffect(() => {
     if (isAuthenticated && user) {
-      navigate(getLandlordVerificationRedirect(user, from), { replace: true })
+      navigate(getPostLoginRedirect(user, from, true), { replace: true })
     }
   }, [from, isAuthenticated, navigate, user])
-
-  useEffect(() => {
-    setForm((current) =>
-      current.role === preferredRole ? current : { ...current, role: preferredRole },
-    )
-  }, [preferredRole])
 
   const title = useMemo(
     () => (isSignup ? 'Create your account' : 'Welcome back!'),
@@ -81,7 +75,7 @@ function AuthPage({ mode }) {
       } else {
         session = await login(form)
       }
-      navigate(getLandlordVerificationRedirect(session.user, from), { replace: true })
+      navigate(getPostLoginRedirect(session.user, from, true), { replace: true })
     } catch (submissionError) {
       setError(submissionError.message)
     } finally {

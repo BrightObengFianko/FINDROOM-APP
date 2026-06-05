@@ -9,7 +9,9 @@ function LandlordEarningsPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-[30px] font-bold tracking-[-0.03em] text-[#111827]">Earnings</h1>
+          <h1 className="text-[26px] font-bold tracking-[-0.03em] text-[#111827] sm:text-[30px]">
+            Earnings
+          </h1>
           <p className="mt-1 text-[14px] text-[#64748b]">
             Track your income and transactions.
           </p>
@@ -53,7 +55,7 @@ function LandlordEarningsPage() {
 
         <LandlordSectionCard title="Recent Transactions">
           <div className="overflow-hidden rounded-[18px] border border-[#edf2f7]">
-            <div className="grid grid-cols-[0.8fr_1.35fr_0.7fr_0.7fr] gap-4 bg-[#fbfcfd] px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#94a3b8]">
+            <div className="hidden grid-cols-[0.8fr_1.35fr_0.7fr_0.7fr] gap-4 bg-[#fbfcfd] px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#94a3b8] sm:grid">
               <span>Date</span>
               <span>Property</span>
               <span>Amount</span>
@@ -63,13 +65,34 @@ function LandlordEarningsPage() {
             <div className="divide-y divide-[#edf2f7]">
               {transactions.map((transaction) => (
                 <div
-                  className="grid grid-cols-[0.8fr_1.35fr_0.7fr_0.7fr] gap-4 px-4 py-3"
+                  className="grid gap-3 px-4 py-4 sm:grid-cols-[0.8fr_1.35fr_0.7fr_0.7fr] sm:gap-4 sm:py-3"
                   key={transaction.id}
                 >
-                  <p className="text-[12px] text-[#334155]">{transaction.date}</p>
-                  <p className="text-[12px] font-medium text-[#111827]">{transaction.property}</p>
-                  <p className="text-[12px] font-semibold text-[#111827]">{transaction.amount}</p>
                   <div>
+                    <p className="text-[11px] uppercase tracking-[0.08em] text-[#94a3b8] sm:hidden">
+                      Date
+                    </p>
+                    <p className="text-[12px] text-[#334155]">{transaction.date}</p>
+                  </div>
+
+                  <div>
+                    <p className="text-[11px] uppercase tracking-[0.08em] text-[#94a3b8] sm:hidden">
+                      Property
+                    </p>
+                    <p className="text-[12px] font-medium text-[#111827]">{transaction.property}</p>
+                  </div>
+
+                  <div>
+                    <p className="text-[11px] uppercase tracking-[0.08em] text-[#94a3b8] sm:hidden">
+                      Amount
+                    </p>
+                    <p className="text-[12px] font-semibold text-[#111827]">{transaction.amount}</p>
+                  </div>
+
+                  <div>
+                    <p className="text-[11px] uppercase tracking-[0.08em] text-[#94a3b8] sm:hidden">
+                      Status
+                    </p>
                     <LandlordStatusBadge status={transaction.status} />
                   </div>
                 </div>

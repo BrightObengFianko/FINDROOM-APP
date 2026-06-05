@@ -6,12 +6,14 @@ function LandlordMessagesPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-[30px] font-bold tracking-[-0.03em] text-[#111827]">Messages</h1>
+        <h1 className="text-[26px] font-bold tracking-[-0.03em] text-[#111827] sm:text-[30px]">
+          Messages
+        </h1>
         <p className="mt-1 text-[14px] text-[#64748b]">Communicate with your guests.</p>
       </div>
 
       <LandlordSectionCard className="overflow-hidden p-0">
-        <div className="grid min-h-[640px] xl:grid-cols-[320px_minmax(0,1fr)]">
+        <div className="grid min-h-[520px] sm:min-h-[580px] xl:min-h-[640px] xl:grid-cols-[320px_minmax(0,1fr)]">
           <aside className="border-b border-[#edf2f7] bg-[#fbfcfb] p-4 xl:border-b-0 xl:border-r">
             <div className="relative">
               <Search
@@ -57,7 +59,7 @@ function LandlordMessagesPage() {
             </div>
           </aside>
 
-          <div className="flex min-h-[640px] flex-col bg-white">
+          <div className="flex min-h-[520px] flex-col bg-white sm:min-h-[580px] xl:min-h-[640px]">
             <div className="flex items-center justify-between border-b border-[#edf2f7] px-6 py-5">
               <div className="flex items-center gap-3">
                 <img

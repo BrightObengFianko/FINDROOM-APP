@@ -8,6 +8,7 @@ import {
   PlusSquare,
   Settings,
   Wallet,
+  X,
 } from 'lucide-react'
 
 const primaryItems = [
@@ -43,56 +44,85 @@ function SidebarLink({ active, icon: Icon, label, onClick }) {
   )
 }
 
-function LandlordSidebar({ activePage, onSelect }) {
+function LandlordSidebar({ activePage, isOpen, onClose, onSelect }) {
+  const handleSelect = (pageId) => {
+    onSelect(pageId)
+    onClose()
+  }
+
   return (
-    <aside className="ld-sidebar-scroll fixed left-0 top-0 z-20 hidden h-screen w-[248px] overflow-y-auto border-r border-[#e8edf1] bg-white px-5 py-7 xl:block">
-      <div className="flex items-center gap-3 px-2">
-        <div className="grid h-11 w-11 place-items-center rounded-[14px] bg-[#eff9ef] text-[#24963f]">
-          <House size={24} strokeWidth={2.3} />
-        </div>
-        <div>
-          <p className="text-[20px] font-bold tracking-[-0.03em] text-[#111827]">StayNest</p>
-        </div>
-      </div>
+    <>
+      <div
+        className={`fixed inset-0 z-20 bg-slate-950/25 transition-[opacity,visibility] duration-300 xl:hidden ${
+          isOpen ? 'visible opacity-100' : 'invisible pointer-events-none opacity-0'
+        }`}
+        onClick={onClose}
+      />
 
-      <nav className="mt-9 space-y-1.5">
-        {primaryItems.map((item) => (
-          <SidebarLink
-            active={activePage === item.id}
-            icon={item.icon}
-            key={item.id}
-            label={item.label}
-            onClick={() => onSelect(item.id)}
-          />
-        ))}
-      </nav>
+      <aside
+        className={`ld-sidebar-scroll fixed left-0 top-0 z-30 h-screen w-[248px] overflow-y-auto border-r border-[#e8edf1] bg-white px-5 py-7 shadow-[0_18px_48px_rgba(15,23,42,0.14)] transition-[transform,opacity,visibility] duration-300 ease-out xl:z-20 xl:visible xl:translate-x-0 xl:opacity-100 xl:shadow-none ${
+          isOpen ? 'visible translate-x-0 opacity-100' : 'invisible -translate-x-full opacity-0'
+        }`}
+        id="landlord-sidebar"
+      >
+        <div className="flex items-center justify-between gap-3 px-2">
+          <div className="flex items-center gap-3">
+            <div className="grid h-11 w-11 place-items-center rounded-[14px] bg-[#eff9ef] text-[#24963f]">
+              <House size={24} strokeWidth={2.3} />
+            </div>
+            <div>
+              <p className="text-[20px] font-bold tracking-[-0.03em] text-[#111827]">StayNest</p>
+            </div>
+          </div>
 
-      <div className="mt-8 border-t border-[#edf2f7] pt-8">
-        <div className="space-y-1.5">
-          {secondaryItems.map((item) => (
+          <button
+            className="inline-flex h-10 w-10 items-center justify-center rounded-[12px] border border-[#e8edf1] text-[#475569] xl:hidden"
+            onClick={onClose}
+            type="button"
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        <nav className="mt-9 space-y-1.5">
+          {primaryItems.map((item) => (
             <SidebarLink
               active={activePage === item.id}
               icon={item.icon}
               key={item.id}
               label={item.label}
-              onClick={() => onSelect(item.id)}
+              onClick={() => handleSelect(item.id)}
+            />
+          ))}
+        </nav>
+
+        <div className="mt-8 border-t border-[#edf2f7] pt-8">
+          <div className="space-y-1.5">
+            {secondaryItems.map((item) => (
+              <SidebarLink
+                active={activePage === item.id}
+                icon={item.icon}
+                key={item.id}
+                label={item.label}
+                onClick={() => handleSelect(item.id)}
+              />
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-8 border-t border-[#edf2f7] pt-8">
+          {footerItems.map((item) => (
+            <SidebarLink
+              active={activePage === item.id}
+              icon={item.icon}
+              key={item.id}
+              label={item.label}
+              onClick={() => handleSelect(item.id)}
             />
           ))}
         </div>
-      </div>
-
-      <div className="mt-8 border-t border-[#edf2f7] pt-8">
-        {footerItems.map((item) => (
-          <SidebarLink
-            active={activePage === item.id}
-            icon={item.icon}
-            key={item.id}
-            label={item.label}
-            onClick={() => onSelect(item.id)}
-          />
-        ))}
-      </div>
-    </aside>
+      </aside>
+    </>
   )
 }
 
