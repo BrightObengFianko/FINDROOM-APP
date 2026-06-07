@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
 import AppShell from '../../components/layout/AppShell'
 import ListingPreviewPanel from '../../components/common/ListingPreviewPanel'
 import StatusBadge from '../../components/common/StatusBadge'
-import AdminActionMenu from '../components/AdminActionMenu'
+import GlobalDropdown from '../../components/common/GlobalDropdown'
 import AdminDataTable from '../components/AdminDataTable'
 import AdminModal from '../components/AdminModal'
 import AdminPageToolbar from '../components/AdminPageToolbar'
@@ -176,7 +176,7 @@ function AdminListingsPage() {
           <Link className="text-sm font-semibold text-brand-600" to={`/admin/listings/${listing.id}`}>
             View Details
           </Link>
-          <AdminActionMenu
+          <GlobalDropdown
             actions={[
               {
                 label: 'Approve listing',

@@ -1,11 +1,11 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import AppShell from '../../components/layout/AppShell'
 import StatusBadge from '../../components/common/StatusBadge'
+import GlobalDropdown from '../../components/common/GlobalDropdown'
 import { useAppData } from '../../context/AppDataContext'
 import { useAuth } from '../../context/AuthContext'
 import { formatDate } from '../../utils/format'
 import { resolveAllowedRoles } from '../../utils/roles'
-import AdminActionMenu from '../components/AdminActionMenu'
 import AdminDataTable from '../components/AdminDataTable'
 import AdminModal from '../components/AdminModal'
 import AdminPageToolbar from '../components/AdminPageToolbar'
@@ -159,17 +159,23 @@ function AdminUsersPage() {
   }, [activeTab, mergedUsers, query])
 
   const totalPages = Math.max(1, Math.ceil(filteredUsers.length / pageSize))
-  const paginatedUsers = paginateRows(filteredUsers, page, pageSize)
+  const safePage = Math.min(page, totalPages)
+  const paginatedUsers = paginateRows(filteredUsers, safePage, pageSize)
 
-  useEffect(() => {
+  const handleTabChange = (nextTab) => {
+    setActiveTab(nextTab)
     setPage(1)
-  }, [activeTab, query, pageSize])
+  }
 
-  useEffect(() => {
-    if (page > totalPages) {
-      setPage(totalPages)
-    }
-  }, [page, totalPages])
+  const handleSearchChange = (value) => {
+    setQuery(value)
+    setPage(1)
+  }
+
+  const handlePageSizeChange = (nextPageSize) => {
+    setPageSize(nextPageSize)
+    setPage(1)
+  }
 
   const handlePromoteToAdmin = (user) => {
     if (user.source === 'platform') {
@@ -243,7 +249,7 @@ function AdminUsersPage() {
       cellClassName: 'text-right',
       render: (user) => (
         <div className="flex justify-end">
-          <AdminActionMenu
+          <GlobalDropdown
             actions={[
               { label: 'View profile', onClick: () => setSelectedUser(user) },
               user.source === 'session'
@@ -278,17 +284,17 @@ function AdminUsersPage() {
   return (
     <AppShell subtitle="Manage platform users and control who can access the admin workspace." title="Users">
       <section className="section-card">
-        <AdminSectionTabs activeTab={activeTab} onChange={setActiveTab} tabs={tabs} />
+        <AdminSectionTabs activeTab={activeTab} onChange={handleTabChange} tabs={tabs} />
         <AdminPageToolbar
-          onSearchChange={setQuery}
+          onSearchChange={handleSearchChange}
           searchPlaceholder="Search users..."
           searchValue={query}
         />
         <AdminDataTable columns={columns} rows={paginatedUsers} />
         <AdminPagination
           onPageChange={setPage}
-          onPageSizeChange={setPageSize}
-          page={page}
+          onPageSizeChange={handlePageSizeChange}
+          page={safePage}
           pageSize={pageSize}
           totalItems={filteredUsers.length}
           totalPages={totalPages}

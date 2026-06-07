@@ -2,7 +2,7 @@ import { BadgeCheck, Eye, FileText, Phone, ShieldCheck, X, XCircle } from 'lucid
 import { useEffect, useMemo, useState } from 'react'
 import AppShell from '../../components/layout/AppShell'
 import StatusBadge from '../../components/common/StatusBadge'
-import AdminActionMenu from '../components/AdminActionMenu'
+import GlobalDropdown from '../../components/common/GlobalDropdown'
 import AdminDataTable from '../components/AdminDataTable'
 import AdminModal from '../components/AdminModal'
 import AdminPageToolbar from '../components/AdminPageToolbar'
@@ -184,12 +184,18 @@ function AdminLandlordsPage() {
   )
 
   const totalPages = Math.max(1, Math.ceil(filteredRequests.length / pageSize))
-  const paginatedRequests = paginateRows(filteredRequests, page, pageSize)
+  const safePage = Math.min(page, totalPages)
+  const paginatedRequests = paginateRows(filteredRequests, safePage, pageSize)
   const directoryTotalPages = Math.max(
     1,
     Math.ceil(filteredDirectoryLandlords.length / directoryPageSize),
   )
-  const paginatedLandlords = paginateRows(filteredDirectoryLandlords, directoryPage, directoryPageSize)
+  const safeDirectoryPage = Math.min(directoryPage, directoryTotalPages)
+  const paginatedLandlords = paginateRows(
+    filteredDirectoryLandlords,
+    safeDirectoryPage,
+    directoryPageSize,
+  )
 
   const tabs = useMemo(
     () => [
@@ -212,40 +218,27 @@ function AdminLandlordsPage() {
     [verificationRequests],
   )
 
-  useEffect(() => {
+  const handleTabChange = (nextTab) => {
+    setActiveTab(nextTab)
     setPage(1)
     setDirectoryPage(1)
-  }, [activeTab, normalizedQuery, pageSize, directoryPageSize])
+  }
 
-  useEffect(() => {
-    if (page > totalPages) {
-      setPage(totalPages)
-    }
-  }, [page, totalPages])
+  const handleSearchChange = (value) => {
+    setQuery(value)
+    setPage(1)
+    setDirectoryPage(1)
+  }
 
-  useEffect(() => {
-    if (directoryPage > directoryTotalPages) {
-      setDirectoryPage(directoryTotalPages)
-    }
-  }, [directoryPage, directoryTotalPages])
+  const handlePageSizeChange = (nextPageSize) => {
+    setPageSize(nextPageSize)
+    setPage(1)
+  }
 
-  useEffect(() => {
-    if (!isDocumentViewerOpen) {
-      return undefined
-    }
-
-    const handleKeyDown = (event) => {
-      if (event.key === 'Escape') {
-        closeDocumentViewer()
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyDown)
-
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown)
-    }
-  }, [isDocumentViewerOpen])
+  const handleDirectoryPageSizeChange = (nextPageSize) => {
+    setDirectoryPageSize(nextPageSize)
+    setDirectoryPage(1)
+  }
 
   const selectedRequest =
     verificationRequests.find((request) => request.id === selectedRequestId) || null
@@ -265,6 +258,24 @@ function AdminLandlordsPage() {
     setIsDocumentViewerOpen(false)
     setSelectedRequestId(null)
   }
+
+  useEffect(() => {
+    if (!isDocumentViewerOpen) {
+      return undefined
+    }
+
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        closeDocumentViewer()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [isDocumentViewerOpen])
 
   const landlordColumns = [
     {
@@ -307,7 +318,7 @@ function AdminLandlordsPage() {
       cellClassName: 'text-right',
       render: (landlord) => (
         <div className="flex justify-end">
-          <AdminActionMenu
+          <GlobalDropdown
             actions={[
               {
                 label: landlord.status === 'Active' ? 'Set inactive' : 'Set active',
@@ -345,11 +356,11 @@ function AdminLandlordsPage() {
         </div>
 
         <div className="mt-5">
-          <AdminSectionTabs activeTab={activeTab} onChange={setActiveTab} tabs={tabs} />
+          <AdminSectionTabs activeTab={activeTab} onChange={handleTabChange} tabs={tabs} />
         </div>
 
         <AdminPageToolbar
-          onSearchChange={setQuery}
+          onSearchChange={handleSearchChange}
           searchPlaceholder="Search by name, email, or phone..."
           searchValue={query}
         >
@@ -485,8 +496,8 @@ function AdminLandlordsPage() {
 
             <AdminPagination
               onPageChange={setPage}
-              onPageSizeChange={setPageSize}
-              page={page}
+              onPageSizeChange={handlePageSizeChange}
+              page={safePage}
               pageSize={pageSize}
               totalItems={filteredRequests.length}
               totalPages={totalPages}
@@ -519,8 +530,8 @@ function AdminLandlordsPage() {
 
         <AdminPagination
           onPageChange={setDirectoryPage}
-          onPageSizeChange={setDirectoryPageSize}
-          page={directoryPage}
+          onPageSizeChange={handleDirectoryPageSizeChange}
+          page={safeDirectoryPage}
           pageSize={directoryPageSize}
           totalItems={filteredDirectoryLandlords.length}
           totalPages={directoryTotalPages}

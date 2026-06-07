@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import AppShell from '../../components/layout/AppShell'
 import StatusBadge from '../../components/common/StatusBadge'
+import GlobalDropdown from '../../components/common/GlobalDropdown'
 import { formatCurrency, formatDate } from '../../utils/format'
-import AdminActionMenu from '../components/AdminActionMenu'
 import AdminDataTable from '../components/AdminDataTable'
 import AdminPageToolbar from '../components/AdminPageToolbar'
 import AdminPagination from '../components/AdminPagination'
@@ -48,17 +48,23 @@ function AdminBookingsPage() {
   }, [activeTab, bookings, listingMap, query])
 
   const totalPages = Math.max(1, Math.ceil(filteredBookings.length / pageSize))
-  const paginatedBookings = paginateRows(filteredBookings, page, pageSize)
+  const safePage = Math.min(page, totalPages)
+  const paginatedBookings = paginateRows(filteredBookings, safePage, pageSize)
 
-  useEffect(() => {
+  const handleTabChange = (nextTab) => {
+    setActiveTab(nextTab)
     setPage(1)
-  }, [activeTab, query, pageSize])
+  }
 
-  useEffect(() => {
-    if (page > totalPages) {
-      setPage(totalPages)
-    }
-  }, [page, totalPages])
+  const handleSearchChange = (value) => {
+    setQuery(value)
+    setPage(1)
+  }
+
+  const handlePageSizeChange = (nextPageSize) => {
+    setPageSize(nextPageSize)
+    setPage(1)
+  }
 
   const columns = [
     {
@@ -121,7 +127,7 @@ function AdminBookingsPage() {
       cellClassName: 'text-right',
       render: (booking) => (
         <div className="flex justify-end">
-          <AdminActionMenu
+          <GlobalDropdown
             actions={[
               booking.status !== 'Upcoming'
                 ? {
@@ -158,17 +164,17 @@ function AdminBookingsPage() {
   return (
     <AppShell subtitle="Review bookings, update statuses, and monitor reservation activity." title="Bookings">
       <section className="section-card">
-        <AdminSectionTabs activeTab={activeTab} onChange={setActiveTab} tabs={tabs} />
+        <AdminSectionTabs activeTab={activeTab} onChange={handleTabChange} tabs={tabs} />
         <AdminPageToolbar
-          onSearchChange={setQuery}
+          onSearchChange={handleSearchChange}
           searchPlaceholder="Search bookings..."
           searchValue={query}
         />
         <AdminDataTable columns={columns} rows={paginatedBookings} />
         <AdminPagination
           onPageChange={setPage}
-          onPageSizeChange={setPageSize}
-          page={page}
+          onPageSizeChange={handlePageSizeChange}
+          page={safePage}
           pageSize={pageSize}
           totalItems={filteredBookings.length}
           totalPages={totalPages}

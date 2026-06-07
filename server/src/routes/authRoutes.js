@@ -38,8 +38,20 @@ router.post('/login', async (req, res) => {
       userAgent: req.get('user-agent') || '',
     },
   )
+
   if (!user) {
     return res.status(401).json({ message: 'Invalid login credentials.' })
+  }
+
+  // ✅ Landlord verification check (ONLY ONCE AFTER APPROVAL)
+  if (
+    user.role === 'landlord' &&
+    user.landlord_verification_status !== 'approved'
+  ) {
+    return res.status(403).json({
+      success: false,
+      message: 'Your landlord account is awaiting approval.'
+    })
   }
 
   return res.json({ token: signToken(user), user })
