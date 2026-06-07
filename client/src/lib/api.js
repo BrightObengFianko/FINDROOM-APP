@@ -8,6 +8,7 @@ const api = axios.create({
 
 const isMockToken = (token) => typeof token === 'string' && token.startsWith('mock-token-')
 
+export { isMockToken }
 export const setAuthToken = (token) => {
   if (token && !isMockToken(token)) {
     api.defaults.headers.common.Authorization = `Bearer ${token}`

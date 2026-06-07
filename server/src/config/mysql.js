@@ -57,15 +57,6 @@ const createPoolConfig = () => ({
   queueLimit: 0,
 })
 
-const legacyDemoEmails = [
-  'ama.serwaa@findroom.local',
-  'kwaku.mensah@findroom.local',
-  'user@findroom.dev',
-  'landlord@findroom.dev',
-  'admin@findroom.dev',
-  'david@example.com',
-]
-
 const readInitSql = async () =>
   fs.readFile(path.join(__dirname, '..', '..', 'sql', 'init-findroom-db.sql'), 'utf8')
 
@@ -91,19 +82,13 @@ const ensureExtendedUserColumns = async (connection) => {
   }
 }
 
-const clearLegacyDemoUsers = async (connection) => {
-  if (!legacyDemoEmails.length) {
-    return
-  }
-
-  await connection.execute(
-    `DELETE FROM users WHERE LOWER(email) IN (${legacyDemoEmails.map(() => '?').join(', ')})`,
-    legacyDemoEmails.map((email) => normalizeEmail(email)),
-  )
-}
-
 const seedDemoUsers = async (connection) => {
-  await clearLegacyDemoUsers(connection)
+  const [rows] = await connection.execute('SELECT COUNT(*) AS total FROM users')
+  const totalUsers = Number(rows[0]?.total || 0)
+
+  if (totalUsers > 0) {
+    return false
+  }
 
   for (const user of mockStore.users) {
     const passwordHash = await bcrypt.hash(user.password, 10)

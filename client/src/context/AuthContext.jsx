@@ -1,7 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useEffect, useState } from 'react'
 import { mockUsers } from '../data/mockData'
-import api, { setAuthToken } from '../lib/api'
+import api, { isMockToken, setAuthToken } from '../lib/api'
 import { canAssumeRole, hydrateUserRoles } from '../utils/roles'
 
 const AUTH_STORAGE_KEY = 'findroom-auth'
@@ -197,10 +197,53 @@ export function AuthProvider({ children }) {
   const storedSession = readStoredSession()
   const [token, setToken] = useState(storedSession.token)
   const [user, setUser] = useState(storedSession.user)
-  const loading = false
+  const [loading, setLoading] = useState(Boolean(storedSession.token && !isMockToken(storedSession.token)))
 
   useEffect(() => {
     setAuthToken(token)
+  }, [token])
+
+  useEffect(() => {
+    let cancelled = false
+
+    const syncSessionUser = async () => {
+      if (!token) {
+        setLoading(false)
+        return
+      }
+
+      if (isMockToken(token)) {
+        setLoading(false)
+        return
+      }
+
+      setLoading(true)
+
+      try {
+        const response = await api.get('/users/me')
+        const refreshedUser = sanitizeUser(response.data?.user, response.data?.user?.role)
+
+        if (!cancelled && refreshedUser) {
+          setUser(refreshedUser)
+          window.localStorage.setItem(
+            AUTH_STORAGE_KEY,
+            JSON.stringify({ token, user: refreshedUser }),
+          )
+        }
+      } catch {
+        // Keep the stored session if the refresh call is temporarily unavailable.
+      } finally {
+        if (!cancelled) {
+          setLoading(false)
+        }
+      }
+    }
+
+    syncSessionUser()
+
+    return () => {
+      cancelled = true
+    }
   }, [token])
 
   const persistSession = (session) => {

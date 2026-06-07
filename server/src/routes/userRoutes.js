@@ -27,6 +27,10 @@ const uploadToCloudinary = (buffer) =>
 
 router.use(requireAuth)
 
+router.get('/me', async (req, res) => {
+  res.json({ user: applyUserRoles(req.user, req.user.role) })
+})
+
 router.put('/me', async (req, res) => {
   const user = await updateCurrentUser(req.user.id, req.body)
   res.json({ user: applyUserRoles(user, req.user.role) })
