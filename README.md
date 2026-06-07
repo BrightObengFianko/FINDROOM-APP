@@ -83,6 +83,7 @@ Server environment values:
 - `MYSQL_PASSWORD=`
 - `MYSQL_DATABASE=findroom_db`
 - `JWT_SECRET=findroom-dev-secret`
+- `JWT_EXPIRES_IN=` optional; leave empty to keep sessions active until logout
 - `CLOUDINARY_CLOUD_NAME=`
 - `CLOUDINARY_API_KEY=`
 - `CLOUDINARY_API_SECRET=`
@@ -139,6 +140,7 @@ That starts the React client and the Express server from VS Code terminals.
 - Without `MONGO_URI`, the server starts an embedded MongoDB instance, clears the old demo seed, and reseeds the current workspace data automatically.
 - When MySQL env vars are configured, the server initializes `server/sql/init-findroom-db.sql`, extends the `users` table with the additional fields the app needs, and seeds the same bright account into MySQL auth.
 - With MySQL auth enabled, login/signup/profile use MySQL while rooms, bookings, messages, and payments continue to use the app's existing Mongo/mock content flow as available.
+- Auth sessions are persisted in browser storage and the backend JWT stays valid until it expires. If `JWT_EXPIRES_IN` is left empty, sessions remain active until the user logs out.
 - Without Cloudinary credentials, avatar uploads return a generated placeholder URL so the UI flow still works.
 - The payment system is intentionally mock-only and structured for future gateway integration.
 

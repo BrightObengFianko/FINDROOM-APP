@@ -8,7 +8,6 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: './index.html',
-        'landlord-dashboard': './landlord-dashboard.html',
       },
     },
   },

@@ -2,6 +2,12 @@ const jwt = require('jsonwebtoken')
 const { findUserById } = require('../services/platformService')
 const { applyUserRoles } = require('../utils/roles')
 
+const getJwtOptions = () => {
+  const expiresIn = process.env.JWT_EXPIRES_IN
+
+  return expiresIn ? { expiresIn } : {}
+}
+
 const signToken = (user) =>
   jwt.sign(
     {
@@ -10,7 +16,7 @@ const signToken = (user) =>
       roles: applyUserRoles(user, user.role)?.roles,
     },
     process.env.JWT_SECRET || 'findroom-dev-secret',
-    { expiresIn: '7d' },
+    getJwtOptions(),
   )
 
 const requireAuth = async (req, res, next) => {

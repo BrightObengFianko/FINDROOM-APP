@@ -71,27 +71,32 @@ const readStoredSession = () => {
     return { token: null, user: null }
   }
 
-  const storedSession = window.localStorage.getItem(AUTH_STORAGE_KEY)
+  try {
+    const storedSession = window.localStorage.getItem(AUTH_STORAGE_KEY)
 
-  if (!storedSession) {
-    return { token: null, user: null }
-  }
+    if (!storedSession) {
+      return { token: null, user: null }
+    }
 
-  const parsedSession = JSON.parse(storedSession)
+    const parsedSession = JSON.parse(storedSession)
 
-  if (typeof parsedSession.token === 'string' && parsedSession.token.startsWith('mock-token-')) {
+    if (!parsedSession?.token || !parsedSession?.user) {
+      window.localStorage.removeItem(AUTH_STORAGE_KEY)
+      return { token: null, user: null }
+    }
+
+    if (isRemovedDemoUser(parsedSession.user)) {
+      window.localStorage.removeItem(AUTH_STORAGE_KEY)
+      return { token: null, user: null }
+    }
+
+    return {
+      token: parsedSession.token,
+      user: sanitizeUser(parsedSession.user, parsedSession.user?.role),
+    }
+  } catch {
     window.localStorage.removeItem(AUTH_STORAGE_KEY)
     return { token: null, user: null }
-  }
-
-  if (isRemovedDemoUser(parsedSession.user)) {
-    window.localStorage.removeItem(AUTH_STORAGE_KEY)
-    return { token: null, user: null }
-  }
-
-  return {
-    token: parsedSession.token,
-    user: sanitizeUser(parsedSession.user, parsedSession.user?.role),
   }
 }
 
@@ -189,8 +194,9 @@ const cleanupStoredDemoData = () => {
 cleanupStoredDemoData()
 
 export function AuthProvider({ children }) {
-  const [token, setToken] = useState(() => readStoredSession().token)
-  const [user, setUser] = useState(() => readStoredSession().user)
+  const storedSession = readStoredSession()
+  const [token, setToken] = useState(storedSession.token)
+  const [user, setUser] = useState(storedSession.user)
   const loading = false
 
   useEffect(() => {
